@@ -17,8 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Replace with your key (better to store in .env in real usage)
-const XAI_API_KEY =
-  "xai-EsiYNjjhrivKzQFlN6UklpRqgNoXh5hfAzayfHrBNUnyB96dY1vnAPmZmbRSOV3NAC3P1ZQW4BJ3TqzP";
+const XAI_API_KEY = ""
 
 app.use(express.json());
 app.use(express.static(__dirname));
