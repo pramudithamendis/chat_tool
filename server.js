@@ -9,6 +9,10 @@ import unzipper from "unzipper";
 // const path = require("path");
 import os from "os";
 import { exec } from "child_process";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,8 +20,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8089;
 
-// Replace with your key (better to store in .env in real usage)
-const XAI_API_KEY = "xai-EsiYNjjhrivKzQFlN6UklpRqgNoXh5hfAzayfHrBNUnyB96dY1vnAPmZmbRSOV3NAC3P1ZQW4BJ3TqzP"
+// Get API key from .env file
+const XAI_API_KEY = process.env.secret;
 
 app.use(express.json());
 app.use(express.static(__dirname));
