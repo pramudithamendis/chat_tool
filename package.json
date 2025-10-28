@@ -4,12 +4,18 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop chat-tool",
+    "pm2:restart": "pm2 restart chat-tool",
+    "pm2:logs": "pm2 logs chat-tool",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Game Generator Chat Tool with nginx integration",
   "dependencies": {
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
