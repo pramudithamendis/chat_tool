@@ -14,10 +14,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 
 // Replace with your key (better to store in .env in real usage)
-const XAI_API_KEY = ""
+const XAI_API_KEY = "xai-EsiYNjjhrivKzQFlN6UklpRqgNoXh5hfAzayfHrBNUnyB96dY1vnAPmZmbRSOV3NAC3P1ZQW4BJ3TqzP"
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -294,15 +294,15 @@ app.post("/get2links", (req, res) => {
       },
       players: [
         {
-          name: "Kavindu",
-          uuid: "fdb0c57e-076b-420a-86d6-9d0e15180e32",
+          name: "Player1",
+          uuid: "uuid_1",
           profileImage:
             "https://safa.sgp1.digitaloceanspaces.com/safa./avatar_images/Kaelani_M.png",
           ready: true,
         },
         {
-          name: "Hesara",
-          uuid: "fdb0c57e-076b-420a-86d6-9d0e15180e34",
+          name: "Player2",
+          uuid: "uuid_2",
           profileImage:
             "https://safa.sgp1.digitaloceanspaces.com/safa./avatar_images/Zayven_M.png",
           ready: true,
@@ -343,3 +343,4 @@ app.post("/get2links", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
