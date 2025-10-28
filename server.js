@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 5002;
+const PORT = process.env.PORT || 8089;
 
 // Replace with your key (better to store in .env in real usage)
 const XAI_API_KEY = "xai-EsiYNjjhrivKzQFlN6UklpRqgNoXh5hfAzayfHrBNUnyB96dY1vnAPmZmbRSOV3NAC3P1ZQW4BJ3TqzP"
