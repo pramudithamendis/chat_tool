@@ -107,7 +107,7 @@ app.post("/chat", async (req, res) => {
 
     const start = Date.now();
     console.log(`[${new Date().toISOString()}] /chat request started, timeout=${timeoutMs}ms`);
-    
+
     const response = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -126,20 +126,20 @@ app.post("/chat", async (req, res) => {
   } catch (err) {
     const duration = Date.now() - start;
     console.error(`[${new Date().toISOString()}] Error in /chat route after ${duration}ms:`, err && err.stack ? err.stack : err);
-    
+
     // If the fetch was aborted because it timed out, return 504 so upstream gateway/proxy
     // is informed this was a timeout rather than an internal server error.
     if (err && err.name === "AbortError") {
-      return res.status(504).json({ 
-        error: "Upstream API timed out", 
+      return res.status(504).json({
+        error: "Upstream API timed out",
         detail: `xAI API did not respond within ${timeoutMs}ms. Try increasing CHAT_TIMEOUT_MS env variable or check if API is slow.`,
         duration: duration
       });
     }
 
     // Other network/fetch errors -> 502 Bad Gateway (upstream failure)
-    res.status(502).json({ 
-      error: "Upstream request failed", 
+    res.status(502).json({
+      error: "Upstream request failed",
       detail: err && err.message ? err.message : String(err),
       duration: duration
     });
@@ -170,7 +170,7 @@ app.get("/server-download", async (req, res) => {
         });
       })
       .on("error", (err) => {
-        fs.unlink(destination, () => {});
+        fs.unlink(destination, () => { });
         console.error("Error downloading file:", err);
         res.status(500).json({ success: false, error: err.message });
       });
@@ -309,7 +309,11 @@ app.get("/start-server", async (req, res) => {
         }
         console.log("Frontend server started successfully");
 
-        // Check and stop backend server if it's running
+        // Log the stdout and stderr
+        console.log("Frontend server output:", stdout2);
+        console.error("Frontend server errors:", stderr2);
+
+        // Proceed with stopping backend server and starting backend
         checkPortInUse(backendPort)
           .then(() => {
             console.log(`Backend server is running on port ${backendPort}. Stopping it...`);
@@ -338,6 +342,7 @@ app.get("/start-server", async (req, res) => {
             });
           });
       });
+
     });
 
   } catch (error) {
