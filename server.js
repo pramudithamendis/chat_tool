@@ -77,7 +77,7 @@ app.get("/fullscreenlogo", (req, res) => {
 // chat endpoint
 app.post("/chat", async (req, res) => {
   const { messages } = req.body;
-  console.log(messages);
+  //console.log(messages);
 
   if (!messages) {
     return res.status(400).json({ error: "messages array required" });
@@ -91,6 +91,14 @@ app.post("/chat", async (req, res) => {
   };
 
   try {
+    // Use AbortController to enforce a request timeout to the upstream API.
+    // This avoids the server waiting indefinitely and helps detect gateway timeouts.
+    const AbortController = global.AbortController || (await import('abort-controller')).default;
+    const controller = new AbortController();
+    const timeoutMs = process.env.CHAT_TIMEOUT_MS ? parseInt(process.env.CHAT_TIMEOUT_MS) : 25000; // default 25s
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const start = Date.now();
     const response = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -98,14 +106,24 @@ app.post("/chat", async (req, res) => {
         Authorization: `Bearer ${XAI_API_KEY}`,
       },
       body: JSON.stringify(payload),
-      timeout: 120000, // 120 seconds
+      signal: controller.signal,
     });
 
+    clearTimeout(timeout);
+    const duration = Date.now() - start;
     const text = await response.text();
+    console.log(`/chat upstream status=${response.status} duration=${duration}ms`);
     res.status(response.status).type("application/json").send(text);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "request failed", detail: err.message });
+    console.error("Error in /chat route:", err && err.stack ? err.stack : err);
+    // If the fetch was aborted because it timed out, return 504 so upstream gateway/proxy
+    // is informed this was a timeout rather than an internal server error.
+    if (err && err.name === "AbortError") {
+      return res.status(504).json({ error: "Upstream timed out", detail: `No response within ${process.env.CHAT_TIMEOUT_MS || 25000}ms` });
+    }
+
+    // Other network/fetch errors -> 502 Bad Gateway (upstream failure)
+    res.status(502).json({ error: "Upstream request failed", detail: err && err.message ? err.message : String(err) });
   }
 });
 app.get("/server-download", async (req, res) => {
