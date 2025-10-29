@@ -10,6 +10,8 @@ import unzipper from "unzipper";
 import os from "os";
 import { exec } from "child_process";
 import dotenv from "dotenv";
+import https from "https";
+import http from "http";
 
 const basePath = path.join("C:", "Users", "HP", "Documents", "GitHub", "chat_tool", "files", "downloadsHere"); // Windows
 
@@ -84,6 +86,40 @@ app.post("/chat", async (req, res) => {
     res.status(500).json({ error: "request failed", detail: err.message });
   }
 });
+app.get("/server-download", async (req, res) => {
+  try {
+    const fileUrl = `http://localhost:${PORT}/download`;
+    const destination = path.join(basePath, "ReactNodeTemplate.zip");
+
+    // Ensure folder exists
+    fs.mkdirSync(basePath, { recursive: true });
+
+    const file = fs.createWriteStream(destination);
+    const protocol = fileUrl.startsWith("https") ? https : http;
+
+    protocol
+      .get(fileUrl, (response) => {
+        response.pipe(file);
+        file.on("finish", () => {
+          file.close();
+          console.log("✅ File saved to:", destination);
+          res.json({
+            success: true,
+            message: "File downloaded successfully to server folder",
+            path: destination,
+          });
+        });
+      })
+      .on("error", (err) => {
+        fs.unlink(destination, () => {});
+        console.error("Error downloading file:", err);
+        res.status(500).json({ success: false, error: err.message });
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.get("/download", (req, res) => {
   const filePath = path.join(__dirname, "files", "ReactNodeTemplate.zip");
@@ -103,7 +139,7 @@ async function unzipFile(zipPath, extractTo) {
 }
 
 app.get("/extract", (req, res) => {
-  const downloadsPath = path.join(os.homedir(), "Downloads");
+  const downloadsPath = basePath;
   console.log("Downloads folderr:", downloadsPath);
   const zipPath = path.join(downloadsPath, "ReactNodeTemplate.zip");
   const extractTo = path.join(PROJECT_FOLDER, "extracted");
