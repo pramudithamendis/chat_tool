@@ -92,13 +92,14 @@ app.post("/chat", async (req, res) => {
 
   try {
     // Use AbortController to enforce a request timeout to the upstream API.
-    // This avoids the server waiting indefinitely and helps detect gateway timeouts.
-    const AbortController = global.AbortController || (await import('abort-controller')).default;
+    // AI completion APIs can take 30-90s for large responses, so use a generous timeout.
     const controller = new AbortController();
-    const timeoutMs = process.env.CHAT_TIMEOUT_MS ? parseInt(process.env.CHAT_TIMEOUT_MS) : 25000; // default 25s
+    const timeoutMs = process.env.CHAT_TIMEOUT_MS ? parseInt(process.env.CHAT_TIMEOUT_MS) : 120000; // default 120s for AI APIs
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     const start = Date.now();
+    console.log(`[${new Date().toISOString()}] /chat request started, timeout=${timeoutMs}ms`);
+    
     const response = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -112,18 +113,28 @@ app.post("/chat", async (req, res) => {
     clearTimeout(timeout);
     const duration = Date.now() - start;
     const text = await response.text();
-    console.log(`/chat upstream status=${response.status} duration=${duration}ms`);
+    console.log(`[${new Date().toISOString()}] /chat upstream status=${response.status} duration=${duration}ms size=${text.length} bytes`);
     res.status(response.status).type("application/json").send(text);
   } catch (err) {
-    console.error("Error in /chat route:", err && err.stack ? err.stack : err);
+    const duration = Date.now() - start;
+    console.error(`[${new Date().toISOString()}] Error in /chat route after ${duration}ms:`, err && err.stack ? err.stack : err);
+    
     // If the fetch was aborted because it timed out, return 504 so upstream gateway/proxy
     // is informed this was a timeout rather than an internal server error.
     if (err && err.name === "AbortError") {
-      return res.status(504).json({ error: "Upstream timed out", detail: `No response within ${process.env.CHAT_TIMEOUT_MS || 25000}ms` });
+      return res.status(504).json({ 
+        error: "Upstream API timed out", 
+        detail: `xAI API did not respond within ${timeoutMs}ms. Try increasing CHAT_TIMEOUT_MS env variable or check if API is slow.`,
+        duration: duration
+      });
     }
 
     // Other network/fetch errors -> 502 Bad Gateway (upstream failure)
-    res.status(502).json({ error: "Upstream request failed", detail: err && err.message ? err.message : String(err) });
+    res.status(502).json({ 
+      error: "Upstream request failed", 
+      detail: err && err.message ? err.message : String(err),
+      duration: duration
+    });
   }
 });
 app.get("/server-download", async (req, res) => {
