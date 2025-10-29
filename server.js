@@ -28,6 +28,28 @@ const PORT = process.env.PORT || 8089;
 const XAI_API_KEY = process.env.secret;
 const PROJECT_FOLDER = process.env.PROJECT_FOLDER || path.join(os.homedir(), "Downloads");
 
+const checkPortInUse = (port) => {
+  return new Promise((resolve, reject) => {
+    exec(`lsof -i :${port}`, (error, stdout, stderr) => {
+      if (error) {
+        reject(error);
+      }
+      resolve(stdout);
+    });
+  });
+};
+
+const killProcessOnPort = (port) => {
+  return new Promise((resolve, reject) => {
+    exec(`lsof -ti :${port} | xargs kill -9`, (error, stdout, stderr) => {
+      if (error) {
+        reject(`Error killing process: ${stderr}`);
+      }
+      resolve(stdout);
+    });
+  });
+};
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -216,56 +238,84 @@ app.post("/save-logicofgamejs", (req, res) => {
   res.json({ success: true, path: filePath });
 });
 
-app.get("/start-server", (req, res) => {
+app.get("/start-server", async (req, res) => {
   console.log("called start-server route");
+
+  const frontendPort = 5173; // Fixed frontend port
+  const backendPort = 8087;  // Backend port (use your existing port)
 
   const backendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
   const frontendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend");
-  // Step 1: Run npm install
-  exec("npm run dev", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
-    if (error2) {
-      console.error(`Error starting server: ${error2.message}`);
-      return res.status(500).send("Failed to start server.js");
-    }
-    if (stderr2) console.error(`stderr: ${stderr2}`);
-    console.log(`stdout: ${stdout2}`);
-    console.log("server started successfully");
-    res.send("Server started successfully!");
-  });
 
-  exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error installing dependencies: ${error.message}`);
-      return res.status(500).send("Failed to install dependencies");
+  try {
+    // Check and stop frontend server if already running
+    try {
+      await checkPortInUse(frontendPort);
+      console.log(`Frontend server is running on port ${frontendPort}. Stopping the existing server...`);
+      await killProcessOnPort(frontendPort);
+    } catch (error) {
+      console.log(`No existing frontend server found on port ${frontendPort}.`);
     }
-    if (stderr) console.error(`stderr: ${stderr}`);
-    console.log(`stdout: ${stdout}--`);
 
-    // Step 2: Start the server.js after npm install completes
-    exec("npm start", { cwd: backendPath }, (error2, stdout2, stderr2) => {
+    // Start frontend server on the fixed port
+    exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
       if (error2) {
-        console.error(`Error starting server: ${error2.message}`);
-        return res.status(500).send("Failed to start server.js");
+        console.error(`Error installing frontend dependencies: ${error2.message}`);
+        return res.status(500).send("Failed to install frontend dependencies");
       }
       if (stderr2) console.error(`stderr: ${stderr2}`);
       console.log(`stdout: ${stdout2}`);
-      console.log("server started successfully");
-      res.send("Server started successfully!");
+      console.log("Frontend dependencies installed successfully");
+
+      // Start frontend server on the fixed port
+      exec("npm run dev", { cwd: frontendPath }, (error3, stdout3, stderr3) => {
+        if (error3) {
+          console.error(`Error starting frontend server: ${error3.message}`);
+          return res.status(500).send("Failed to start frontend server");
+        }
+        if (stderr3) console.error(`stderr: ${stderr3}`);
+        console.log(`stdout: ${stdout3}`);
+        console.log("Frontend server started successfully");
+      });
     });
-  });
 
-  // start the frontend server
-  // exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
-  //   if (error2) {
-  //     console.error(`Error installing server: ${error2.message}`);
-  //     return res.status(500).send("Failed to start server.js");
-  //   }
-  //   if (stderr2) console.error(`stderr: ${stderr2}`);
-  //   console.log(`stdout: ${stdout2}`);
-  //   console.log("server started successfully");
-  //   res.send("Server started successfully!");
 
-  // });
+    // Check and stop backend server if already running
+    try {
+      await checkPortInUse(backendPort);
+      console.log(`Backend server is running on port ${backendPort}. Stopping the existing server...`);
+      await killProcessOnPort(backendPort);
+    } catch (error) {
+      console.log(`No existing backend server found on port ${backendPort}.`);
+    }
+
+    // Start backend server
+    exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error installing dependencies: ${error.message}`);
+        return res.status(500).send("Failed to install backend dependencies");
+      }
+      if (stderr) console.error(`stderr: ${stderr}`);
+      console.log(`stdout: ${stdout}--`);
+
+      // Start the backend server
+      exec("npm start", { cwd: backendPath }, (error2, stdout2, stderr2) => {
+        if (error2) {
+          console.error(`Error starting backend server: ${error2.message}`);
+          return res.status(500).send("Failed to start backend server");
+        }
+        if (stderr2) console.error(`stderr: ${stderr2}`);
+        console.log(`stdout: ${stdout2}`);
+        console.log("Backend server started successfully");
+      });
+    });
+
+    // Send response once both servers are started
+    res.send("Both servers started successfully!");
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).send("Failed to start server(s)");
+  }
 });
 
 app.get("/delete", (req, res) => {
@@ -322,7 +372,7 @@ app.post("/get2links", (req, res) => {
       ],
     };
 
-    const baseUrl = "http://localhost:5173";
+    const baseUrl = "https://aigamef.gameonworld.ai";
     const gameStateId = "68f5bddd86748a2b6dfa746c"; // mock ID, you can replace dynamically
 
     const payload = {
