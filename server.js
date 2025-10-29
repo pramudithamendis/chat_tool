@@ -8,7 +8,7 @@ import fs from "fs";
 import unzipper from "unzipper";
 // const path = require("path");
 import os from "os";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import dotenv from "dotenv";
 import https from "https";
 import http from "http";
@@ -259,29 +259,6 @@ app.get("/start-server", async (req, res) => {
       console.log(`No existing frontend server found on port ${frontendPort}.`);
     }
 
-    // Start frontend server on the fixed port
-    exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
-      if (error2) {
-        console.error(`Error installing frontend dependencies: ${error2.message}`);
-        return res.status(500).send("Failed to install frontend dependencies");
-      }
-      if (stderr2) console.error(`stderr: ${stderr2}`);
-      console.log(`stdout: ${stdout2}`);
-      console.log("Frontend dependencies installed successfully");
-
-      // Start frontend server on the fixed port
-      exec("npm run dev", { cwd: frontendPath }, (error3, stdout3, stderr3) => {
-        if (error3) {
-          console.error(`Error starting frontend server: ${error3.message}`);
-          return res.status(500).send("Failed to start frontend server");
-        }
-        if (stderr3) console.error(`stderr: ${stderr3}`);
-        console.log(`stdout: ${stdout3}`);
-        console.log("Frontend server started successfully");
-      });
-    });
-
-
     // Check and stop backend server if already running
     try {
       await checkPortInUse(backendPort);
@@ -291,29 +268,59 @@ app.get("/start-server", async (req, res) => {
       console.log(`No existing backend server found on port ${backendPort}.`);
     }
 
-    // Start backend server
+    // Install frontend dependencies
+    exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
+      if (error2) {
+        console.error(`Error installing frontend dependencies: ${error2.message}`);
+        return;
+      }
+      if (stderr2) console.error(`stderr: ${stderr2}`);
+      console.log(`stdout: ${stdout2}`);
+      console.log("Frontend dependencies installed successfully");
+
+      // Start frontend server using spawn (for long-running process)
+      const frontendProcess = spawn("npm", ["run", "dev"], { cwd: frontendPath, shell: true });
+      
+      frontendProcess.stdout.on('data', (data) => {
+        console.log(`Frontend: ${data}`);
+      });
+      
+      frontendProcess.stderr.on('data', (data) => {
+        console.error(`Frontend Error: ${data}`);
+      });
+      
+      frontendProcess.on('spawn', () => {
+        console.log("✅ Frontend server started successfully on port", frontendPort);
+      });
+    });
+
+    // Install backend dependencies
     exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error installing dependencies: ${error.message}`);
-        return res.status(500).send("Failed to install backend dependencies");
+        return;
       }
       if (stderr) console.error(`stderr: ${stderr}`);
       console.log(`stdout: ${stdout}--`);
 
-      // Start the backend server
-      exec("npm start", { cwd: backendPath }, (error2, stdout2, stderr2) => {
-        if (error2) {
-          console.error(`Error starting backend server: ${error2.message}`);
-          return res.status(500).send("Failed to start backend server");
-        }
-        if (stderr2) console.error(`stderr: ${stderr2}`);
-        console.log(`stdout: ${stdout2}`);
-        console.log("Backend server started successfully");
+      // Start backend server using spawn (for long-running process)
+      const backendProcess = spawn("npm", ["start"], { cwd: backendPath, shell: true });
+      
+      backendProcess.stdout.on('data', (data) => {
+        console.log(`Backend: ${data}`);
+      });
+      
+      backendProcess.stderr.on('data', (data) => {
+        console.error(`Backend Error: ${data}`);
+      });
+      
+      backendProcess.on('spawn', () => {
+        console.log("✅ Backend server started successfully on port", backendPort);
       });
     });
 
-    // Send response once both servers are started
-    res.send("Both servers started successfully!");
+    // Send response immediately (servers will start in background)
+    res.send("Both servers are starting! Check console logs for status.");
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Failed to start server(s)");
