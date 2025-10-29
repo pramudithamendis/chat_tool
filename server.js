@@ -30,15 +30,21 @@ const PROJECT_FOLDER = process.env.PROJECT_FOLDER || path.join(os.homedir(), "Do
 
 const checkPortInUse = (port) => {
   return new Promise((resolve, reject) => {
-    exec(`netstat -tuln | grep :${port}`, (error, stdout, stderr) => {
-      if (stdout) {
-        resolve(stdout); // port is in use
+    exec(`lsof -i :${port}`, (error, stdout, stderr) => {
+      if (error || stderr) {
+        // Error occurred (port may not be in use or permission issue)
+        reject(new Error(`Error checking port ${port}: ${stderr || error.message}`));
+      } else if (stdout) {
+        // Port is in use (process found)
+        resolve(stdout);
       } else {
-        reject(new Error(`Port ${port} is not in use`)); // port is not in use
+        // Port is not in use, proceed
+        resolve(null); // Successfully resolve with null indicating the port is free
       }
     });
   });
 };
+
 
 
 const killProcessOnPort = (port) => {
