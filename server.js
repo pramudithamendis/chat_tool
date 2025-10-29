@@ -31,21 +31,13 @@ const PROJECT_FOLDER = process.env.PROJECT_FOLDER || path.join(os.homedir(), "Do
 const checkPortInUse = (port) => {
   return new Promise((resolve, reject) => {
     exec(`lsof -i :${port}`, (error, stdout, stderr) => {
-      if (error || stderr) {
-        // Error occurred (port may not be in use or permission issue)
-        reject(new Error(`Error checking port ${port}: ${stderr || error.message}`));
-      } else if (stdout) {
-        // Port is in use (process found)
-        resolve(stdout);
-      } else {
-        // Port is not in use, proceed
-        resolve(null); // Successfully resolve with null indicating the port is free
+      if (error) {
+        reject(error);
       }
+      resolve(stdout);
     });
   });
 };
-
-
 
 const killProcessOnPort = (port) => {
   return new Promise((resolve, reject) => {
@@ -99,15 +91,6 @@ app.post("/chat", async (req, res) => {
   };
 
   try {
-    // Use AbortController to enforce a request timeout to the upstream API.
-    // AI completion APIs can take 30-90s for large responses, so use a generous timeout.
-    const controller = new AbortController();
-    const timeoutMs = process.env.CHAT_TIMEOUT_MS ? parseInt(process.env.CHAT_TIMEOUT_MS) : 200000; // default 200s for AI APIs
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    const start = Date.now();
-    console.log(`[${new Date().toISOString()}] /chat request started, timeout=${timeoutMs}ms`);
-
     const response = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -115,34 +98,16 @@ app.post("/chat", async (req, res) => {
         Authorization: `Bearer ${XAI_API_KEY}`,
       },
       body: JSON.stringify(payload),
-      signal: controller.signal,
+      timeout: 300000, // 300 seconds
     });
 
-    clearTimeout(timeout);
-    const duration = Date.now() - start;
     const text = await response.text();
-    console.log(`[${new Date().toISOString()}] /chat upstream status=${response.status} duration=${duration}ms size=${text.length} bytes`);
     res.status(response.status).type("application/json").send(text);
+    console.log("Response from /chat:", text);
   } catch (err) {
-    const duration = Date.now() - start;
-    console.error(`[${new Date().toISOString()}] Error in /chat route after ${duration}ms:`, err && err.stack ? err.stack : err);
-
-    // If the fetch was aborted because it timed out, return 504 so upstream gateway/proxy
-    // is informed this was a timeout rather than an internal server error.
-    if (err && err.name === "AbortError") {
-      return res.status(504).json({
-        error: "Upstream API timed out",
-        detail: `xAI API did not respond within ${timeoutMs}ms. Try increasing CHAT_TIMEOUT_MS env variable or check if API is slow.`,
-        duration: duration
-      });
-    }
-
-    // Other network/fetch errors -> 502 Bad Gateway (upstream failure)
-    res.status(502).json({
-      error: "Upstream request failed",
-      detail: err && err.message ? err.message : String(err),
-      duration: duration
-    });
+    console.error(err);
+    console.log("Error in /chat route:", err);
+    res.status(500).json({ error: "request failed", detail: err.message });
   }
 });
 app.get("/server-download", async (req, res) => {
@@ -170,7 +135,7 @@ app.get("/server-download", async (req, res) => {
         });
       })
       .on("error", (err) => {
-        fs.unlink(destination, () => { });
+        fs.unlink(destination, () => {});
         console.error("Error downloading file:", err);
         res.status(500).json({ success: false, error: err.message });
       });
@@ -279,79 +244,81 @@ app.get("/start-server", async (req, res) => {
   console.log("called start-server route");
 
   const frontendPort = 5173; // Fixed frontend port
-  const backendPort = 8087;  // Backend port
+  const backendPort = 8087;  // Backend port (use your existing port)
 
-  const frontendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend");
   const backendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
+  const frontendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend");
 
   try {
-    // Check if the frontend server is running
+    // Check and stop frontend server if already running
     try {
       await checkPortInUse(frontendPort);
-      console.log(`Frontend server is running on port ${frontendPort}. Stopping it...`);
+      console.log(`Frontend server is running on port ${frontendPort}. Stopping the existing server...`);
       await killProcessOnPort(frontendPort);
     } catch (error) {
-      console.log(`No frontend server running on port ${frontendPort}.`);
+      console.log(`No existing frontend server found on port ${frontendPort}.`);
     }
 
-    // Start frontend server
-    exec("npm install", { cwd: frontendPath }, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error installing frontend dependencies: ${error.message}`);
+    // Start frontend server on the fixed port
+    exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
+      if (error2) {
+        console.error(`Error installing frontend dependencies: ${error2.message}`);
         return res.status(500).send("Failed to install frontend dependencies");
       }
+      if (stderr2) console.error(`stderr: ${stderr2}`);
+      console.log(`stdout: ${stdout2}`);
       console.log("Frontend dependencies installed successfully");
 
-      exec("npm run dev", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
-        if (error2) {
-          console.error(`Error starting frontend server: ${error2.message}`);
+      // Start frontend server on the fixed port
+      exec("npm run dev", { cwd: frontendPath }, (error3, stdout3, stderr3) => {
+        if (error3) {
+          console.error(`Error starting frontend server: ${error3.message}`);
           return res.status(500).send("Failed to start frontend server");
         }
+        if (stderr3) console.error(`stderr: ${stderr3}`);
+        console.log(`stdout: ${stdout3}`);
         console.log("Frontend server started successfully");
-
-        // Log the stdout and stderr
-        console.log("Frontend server output:", stdout2);
-        console.error("Frontend server errors:", stderr2);
-
-        // Proceed with stopping backend server and starting backend
-        checkPortInUse(backendPort)
-          .then(() => {
-            console.log(`Backend server is running on port ${backendPort}. Stopping it...`);
-            return killProcessOnPort(backendPort);
-          })
-          .catch(() => {
-            console.log(`No existing backend server found on port ${backendPort}.`);
-          })
-          .finally(() => {
-            // Start backend server
-            exec("npm install", { cwd: backendPath }, (error3, stdout3, stderr3) => {
-              if (error3) {
-                console.error(`Error installing backend dependencies: ${error3.message}`);
-                return res.status(500).send("Failed to install backend dependencies");
-              }
-              console.log("Backend dependencies installed successfully");
-
-              exec("npm start", { cwd: backendPath }, (error4, stdout4, stderr4) => {
-                if (error4) {
-                  console.error(`Error starting backend server: ${error4.message}`);
-                  return res.status(500).send("Failed to start backend server");
-                }
-                console.log("Backend server started successfully");
-                res.send("Both frontend and backend servers started successfully!"); // Send the response only once
-              });
-            });
-          });
       });
-
     });
 
+
+    // Check and stop backend server if already running
+    try {
+      await checkPortInUse(backendPort);
+      console.log(`Backend server is running on port ${backendPort}. Stopping the existing server...`);
+      await killProcessOnPort(backendPort);
+    } catch (error) {
+      console.log(`No existing backend server found on port ${backendPort}.`);
+    }
+
+    // Start backend server
+    exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error installing dependencies: ${error.message}`);
+        return res.status(500).send("Failed to install backend dependencies");
+      }
+      if (stderr) console.error(`stderr: ${stderr}`);
+      console.log(`stdout: ${stdout}--`);
+
+      // Start the backend server
+      exec("npm start", { cwd: backendPath }, (error2, stdout2, stderr2) => {
+        if (error2) {
+          console.error(`Error starting backend server: ${error2.message}`);
+          return res.status(500).send("Failed to start backend server");
+        }
+        if (stderr2) console.error(`stderr: ${stderr2}`);
+        console.log(`stdout: ${stdout2}`);
+        console.log("Backend server started successfully");
+      });
+    });
+
+    // Send response once both servers are started
+    res.send("Both servers started successfully!");
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Failed to start server(s)");
   }
 });
-
-
 
 app.get("/delete", (req, res) => {
   const downloadsPath = path.join(os.homedir(), "Downloads");
