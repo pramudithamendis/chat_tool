@@ -94,7 +94,7 @@ app.post("/chat", async (req, res) => {
     // Use AbortController to enforce a request timeout to the upstream API.
     // AI completion APIs can take 30-90s for large responses, so use a generous timeout.
     const controller = new AbortController();
-    const timeoutMs = process.env.CHAT_TIMEOUT_MS ? parseInt(process.env.CHAT_TIMEOUT_MS) : 120000; // default 120s for AI APIs
+    const timeoutMs = process.env.CHAT_TIMEOUT_MS ? parseInt(process.env.CHAT_TIMEOUT_MS) : 200000; // default 200s for AI APIs
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     const start = Date.now();
