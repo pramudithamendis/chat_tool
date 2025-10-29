@@ -273,79 +273,69 @@ app.get("/start-server", async (req, res) => {
   const frontendPort = 5173; // Fixed frontend port
   const backendPort = 8087;  // Backend port (use your existing port)
 
-  const backendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
   const frontendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend");
+  const backendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
 
   try {
-    // Check and stop frontend server if already running
-    try {
-      await checkPortInUse(frontendPort);
-      console.log(`Frontend server is running on port ${frontendPort}. Stopping the existing server...`);
-      await killProcessOnPort(frontendPort);
-    } catch (error) {
-      console.log(`No existing frontend server found on port ${frontendPort}.`);
-    }
+    // First, check if frontend server is running and stop it
+    await checkPortInUse(frontendPort);
+    console.log(`Frontend server is running on port ${frontendPort}. Stopping it...`);
+    await killProcessOnPort(frontendPort);
 
-    // Start frontend server on the fixed port
-    exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
-      if (error2) {
-        console.error(`Error installing frontend dependencies: ${error2.message}`);
+    // Start frontend server
+    exec("npm install", { cwd: frontendPath }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error installing frontend dependencies: ${error.message}`);
         return res.status(500).send("Failed to install frontend dependencies");
       }
-      if (stderr2) console.error(`stderr: ${stderr2}`);
-      console.log(`stdout: ${stdout2}`);
+      console.log(`stdout: ${stdout}`);
       console.log("Frontend dependencies installed successfully");
 
-      // Start frontend server on the fixed port
-      exec("npm run dev", { cwd: frontendPath }, (error3, stdout3, stderr3) => {
-        if (error3) {
-          console.error(`Error starting frontend server: ${error3.message}`);
+      exec("npm run dev", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
+        if (error2) {
+          console.error(`Error starting frontend server: ${error2.message}`);
           return res.status(500).send("Failed to start frontend server");
         }
-        if (stderr3) console.error(`stderr: ${stderr3}`);
-        console.log(`stdout: ${stdout3}`);
         console.log("Frontend server started successfully");
+
+        // Now check and stop backend server if it's running
+        checkPortInUse(backendPort)
+          .then(() => {
+            console.log(`Backend server is running on port ${backendPort}. Stopping it...`);
+            return killProcessOnPort(backendPort);
+          })
+          .catch(() => {
+            console.log(`No existing backend server found on port ${backendPort}.`);
+          })
+          .finally(() => {
+            // Start backend server
+            exec("npm install", { cwd: backendPath }, (error3, stdout3, stderr3) => {
+              if (error3) {
+                console.error(`Error installing backend dependencies: ${error3.message}`);
+                return res.status(500).send("Failed to install backend dependencies");
+              }
+              console.log(`stdout: ${stdout3}`);
+              console.log("Backend dependencies installed successfully");
+
+              exec("npm start", { cwd: backendPath }, (error4, stdout4, stderr4) => {
+                if (error4) {
+                  console.error(`Error starting backend server: ${error4.message}`);
+                  return res.status(500).send("Failed to start backend server");
+                }
+                console.log("Backend server started successfully");
+                res.send("Both frontend and backend servers started successfully!"); // Send the response only once
+              });
+            });
+          });
       });
     });
 
-
-    // Check and stop backend server if already running
-    try {
-      await checkPortInUse(backendPort);
-      console.log(`Backend server is running on port ${backendPort}. Stopping the existing server...`);
-      await killProcessOnPort(backendPort);
-    } catch (error) {
-      console.log(`No existing backend server found on port ${backendPort}.`);
-    }
-
-    // Start backend server
-    exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error installing dependencies: ${error.message}`);
-        return res.status(500).send("Failed to install backend dependencies");
-      }
-      if (stderr) console.error(`stderr: ${stderr}`);
-      console.log(`stdout: ${stdout}--`);
-
-      // Start the backend server
-      exec("npm start", { cwd: backendPath }, (error2, stdout2, stderr2) => {
-        if (error2) {
-          console.error(`Error starting backend server: ${error2.message}`);
-          return res.status(500).send("Failed to start backend server");
-        }
-        if (stderr2) console.error(`stderr: ${stderr2}`);
-        console.log(`stdout: ${stdout2}`);
-        console.log("Backend server started successfully");
-      });
-    });
-
-    // Send response once both servers are started
-    res.send("Both servers started successfully!");
   } catch (error) {
     console.error("Error:", error);
     res.status(500).send("Failed to start server(s)");
   }
 });
+
 
 app.get("/delete", (req, res) => {
   const downloadsPath = path.join(os.homedir(), "Downloads");
