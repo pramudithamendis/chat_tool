@@ -279,16 +279,20 @@ app.get("/start-server", async (req, res) => {
   console.log("called start-server route");
 
   const frontendPort = 5173; // Fixed frontend port
-  const backendPort = 8087;  // Backend port (use your existing port)
+  const backendPort = 8087;  // Backend port
 
   const frontendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend");
   const backendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
 
   try {
-    // First, check if frontend server is running and stop it
-    await checkPortInUse(frontendPort);
-    console.log(`Frontend server is running on port ${frontendPort}. Stopping it...`);
-    await killProcessOnPort(frontendPort);
+    // Check if the frontend server is running
+    try {
+      await checkPortInUse(frontendPort);
+      console.log(`Frontend server is running on port ${frontendPort}. Stopping it...`);
+      await killProcessOnPort(frontendPort);
+    } catch (error) {
+      console.log(`No frontend server running on port ${frontendPort}.`);
+    }
 
     // Start frontend server
     exec("npm install", { cwd: frontendPath }, (error, stdout, stderr) => {
@@ -296,7 +300,6 @@ app.get("/start-server", async (req, res) => {
         console.error(`Error installing frontend dependencies: ${error.message}`);
         return res.status(500).send("Failed to install frontend dependencies");
       }
-      console.log(`stdout: ${stdout}`);
       console.log("Frontend dependencies installed successfully");
 
       exec("npm run dev", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
@@ -306,7 +309,7 @@ app.get("/start-server", async (req, res) => {
         }
         console.log("Frontend server started successfully");
 
-        // Now check and stop backend server if it's running
+        // Check and stop backend server if it's running
         checkPortInUse(backendPort)
           .then(() => {
             console.log(`Backend server is running on port ${backendPort}. Stopping it...`);
@@ -322,7 +325,6 @@ app.get("/start-server", async (req, res) => {
                 console.error(`Error installing backend dependencies: ${error3.message}`);
                 return res.status(500).send("Failed to install backend dependencies");
               }
-              console.log(`stdout: ${stdout3}`);
               console.log("Backend dependencies installed successfully");
 
               exec("npm start", { cwd: backendPath }, (error4, stdout4, stderr4) => {
