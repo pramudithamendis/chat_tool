@@ -651,11 +651,11 @@
         <div class="card">
           <h3>Actions</h3>
           <div class="btns">
-            <a id="delete" href="https://aiapp.xcodelab.xyz/delete">
+            <!-- <a id="delete" href="http://localhost:8089/delete">
               <button onclick="this.style.display='none'">Delete folder</button>
-            </a>
+            </a> -->
             <br />
-            <a id="downloadfolder" href="https://aiapp.xcodelab.xyz/download" download>
+            <a id="downloadfolder" href="http://localhost:8089/download" download>
               <button onclick="this.style.display='none'">Download Folder. Note: After game comes, click "Extract folder"</button>
             </a>
 
@@ -664,7 +664,7 @@
             <div>After game comes, click "Save logicofgame.js"</div>
             <div>After game comes, click "Save server.js"</div>
 
-            <a id="extractfolder" onclick="this.style.display='none'" href="https://aiapp.xcodelab.xyz/extract" download>
+            <a id="extractfolder" onclick="this.style.display='none'" href="http://localhost:8089/extract" download>
               <button>Extract Folder</button>
             </a>
             <!-- <button id="saveBtn">Save Communication</button> -->
@@ -957,7 +957,7 @@
       const app = express();
       const server = http.createServer(app);
       const ws = new WebSocketServer({ server });
-      const PORT = process.env.PORT || 3000;
+      const PORT = process.env.GAME_PORT || 3000;
       // const gameManager = new GameManager(ws);
       app.use(cors());
       app.use(express.json());

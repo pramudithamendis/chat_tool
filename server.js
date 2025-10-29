@@ -11,6 +11,8 @@ import os from "os";
 import { exec } from "child_process";
 import dotenv from "dotenv";
 
+const basePath = path.join("C:", "Users", "HP", "Documents", "GitHub", "chat_tool", "files", "downloadsHere"); // Windows
+
 // Load environment variables from .env file
 dotenv.config();
 
@@ -22,6 +24,7 @@ const PORT = process.env.PORT || 8089;
 
 // Get API key from .env file
 const XAI_API_KEY = process.env.secret;
+const PROJECT_FOLDER = process.env.PROJECT_FOLDER || path.join(os.homedir(), "Downloads");
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -103,7 +106,7 @@ app.get("/extract", (req, res) => {
   const downloadsPath = path.join(os.homedir(), "Downloads");
   console.log("Downloads folderr:", downloadsPath);
   const zipPath = path.join(downloadsPath, "ReactNodeTemplate.zip");
-  const extractTo = path.join(downloadsPath, "extracted");
+  const extractTo = path.join(PROJECT_FOLDER, "extracted");
 
   unzipFile(zipPath, extractTo);
 });
@@ -130,9 +133,11 @@ app.post("/save-appjsx", (req, res) => {
   }
 
   const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "frontend", "src");
-  fs.mkdirSync(downloadsPath, { recursive: true }); // ensure folder exists
+  const savePath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend", "src");
 
-  const filePath = path.join(downloadsPath, "App.jsx");
+  fs.mkdirSync(savePath, { recursive: true });
+
+  const filePath = path.join(savePath, "App.jsx");
   fs.writeFileSync(filePath, content, "utf8");
 
   res.json({ success: true, path: filePath });
@@ -146,9 +151,11 @@ app.post("/save-serverjs", (req, res) => {
   }
 
   const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "backend");
-  fs.mkdirSync(downloadsPath, { recursive: true });
+  const savePath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
 
-  const filePath = path.join(downloadsPath, "server.js");
+  fs.mkdirSync(savePath, { recursive: true });
+
+  const filePath = path.join(savePath, "server.js");
   fs.writeFileSync(filePath, content, "utf8");
 
   res.json({ success: true, path: filePath });
@@ -163,9 +170,11 @@ app.post("/save-logicofgamejs", (req, res) => {
   }
 
   const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "backend");
-  fs.mkdirSync(downloadsPath, { recursive: true });
+  const savePath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
 
-  const filePath = path.join(downloadsPath, "logicofgame.js");
+  fs.mkdirSync(savePath, { recursive: true });
+
+  const filePath = path.join(savePath, "logicofgame.js");
   fs.writeFileSync(filePath, content, "utf8");
 
   res.json({ success: true, path: filePath });
@@ -174,19 +183,30 @@ app.post("/save-logicofgamejs", (req, res) => {
 app.get("/start-server", (req, res) => {
   console.log("called start-server route");
 
-  const backendPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "backend");
-
+  const backendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "backend");
+  const frontendPath = path.join(PROJECT_FOLDER, "extracted", "ReactNodeTemplate", "frontend");
   // Step 1: Run npm install
+  exec("npm run dev", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
+    if (error2) {
+      console.error(`Error starting server: ${error2.message}`);
+      return res.status(500).send("Failed to start server.js");
+    }
+    if (stderr2) console.error(`stderr: ${stderr2}`);
+    console.log(`stdout: ${stdout2}`);
+    console.log("server started successfully");
+    res.send("Server started successfully!");
+  });
+
   exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error installing dependencies: ${error.message}`);
       return res.status(500).send("Failed to install dependencies");
     }
     if (stderr) console.error(`stderr: ${stderr}`);
-    console.log(`stdout: ${stdout}`);
+    console.log(`stdout: ${stdout}--`);
 
     // Step 2: Start the server.js after npm install completes
-    exec("npm run dev", { cwd: backendPath }, (error2, stdout2, stderr2) => {
+    exec("npm start", { cwd: backendPath }, (error2, stdout2, stderr2) => {
       if (error2) {
         console.error(`Error starting server: ${error2.message}`);
         return res.status(500).send("Failed to start server.js");
@@ -197,7 +217,6 @@ app.get("/start-server", (req, res) => {
       res.send("Server started successfully!");
     });
   });
-  const frontendPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "frontend");
 
   // start the frontend server
   // exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
@@ -210,16 +229,6 @@ app.get("/start-server", (req, res) => {
   //   console.log("server started successfully");
   //   res.send("Server started successfully!");
 
-  exec("npm run dev", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
-    if (error2) {
-      console.error(`Error starting server: ${error2.message}`);
-      return res.status(500).send("Failed to start server.js");
-    }
-    if (stderr2) console.error(`stderr: ${stderr2}`);
-    console.log(`stdout: ${stdout2}`);
-    console.log("server started successfully");
-    res.send("Server started successfully!");
-  });
   // });
 });
 
@@ -249,6 +258,7 @@ app.get("/delete", (req, res) => {
     });
   });
 });
+
 let gameSessionUuid = 218;
 app.post("/get2links", (req, res) => {
   gameSessionUuid = gameSessionUuid + 1;
