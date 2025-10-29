@@ -30,14 +30,16 @@ const PROJECT_FOLDER = process.env.PROJECT_FOLDER || path.join(os.homedir(), "Do
 
 const checkPortInUse = (port) => {
   return new Promise((resolve, reject) => {
-    exec(`lsof -i :${port}`, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
+    exec(`netstat -tuln | grep :${port}`, (error, stdout, stderr) => {
+      if (stdout) {
+        resolve(stdout); // port is in use
+      } else {
+        reject(new Error(`Port ${port} is not in use`)); // port is not in use
       }
-      resolve(stdout);
     });
   });
 };
+
 
 const killProcessOnPort = (port) => {
   return new Promise((resolve, reject) => {
@@ -335,6 +337,7 @@ app.get("/start-server", async (req, res) => {
     res.status(500).send("Failed to start server(s)");
   }
 });
+
 
 
 app.get("/delete", (req, res) => {
