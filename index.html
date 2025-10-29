@@ -7,10 +7,7 @@
 
     <!-- Friendly, approachable fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
 
     <style>
       :root {
@@ -25,8 +22,7 @@
         /* lighter for text accents */
         --accent: #00d9ff;
         /* tiny neon hint */
-        --glow: 0 0 24px rgba(126, 58, 242, 0.4),
-          0 0 64px rgba(0, 217, 255, 0.15);
+        --glow: 0 0 24px rgba(126, 58, 242, 0.4), 0 0 64px rgba(0, 217, 255, 0.15);
         --card-glass: rgba(255, 255, 255, 0.06);
         /* --card-stroke: rgba(168, 85, 247, .35); */
         /* --card-stroke: #01d0ff2d; */
@@ -56,8 +52,7 @@
       body {
         margin: 0;
         padding: 22px;
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial,
-          sans-serif;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         color: var(--text);
         /* background:
         radial-gradient(600px 400px at 10% -10%, rgba(126, 58, 242, .35), transparent 60%),
@@ -74,21 +69,7 @@
         position: fixed;
         inset: 0;
         z-index: -1;
-        background-image: radial-gradient(
-            2px 2px at 20% 30%,
-            rgba(255, 255, 255, 0.35) 50%,
-            transparent 51%
-          ),
-          radial-gradient(
-            1.5px 1.5px at 70% 20%,
-            rgba(255, 255, 255, 0.25) 50%,
-            transparent 51%
-          ),
-          radial-gradient(
-            1.5px 1.5px at 40% 70%,
-            rgba(255, 255, 255, 0.2) 50%,
-            transparent 51%
-          );
+        background-image: radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.35) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 70% 20%, rgba(255, 255, 255, 0.25) 50%, transparent 51%), radial-gradient(1.5px 1.5px at 40% 70%, rgba(255, 255, 255, 0.2) 50%, transparent 51%);
         animation: twinkle 8s linear infinite;
         opacity: 0.5;
       }
@@ -125,11 +106,7 @@
         gap: 12px;
         padding: 10px 14px;
         border-radius: var(--radius);
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.06),
-          rgba(255, 255, 255, 0.02)
-        );
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
         border: 1px solid var(--card-stroke);
         box-shadow: var(--shadow-soft);
       }
@@ -158,11 +135,7 @@
         gap: 12px;
         padding: 10px 14px;
         border-radius: var(--radius);
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.06),
-          rgba(255, 255, 255, 0.02)
-        );
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
         border: 1px solid var(--card-stroke);
       }
 
@@ -326,12 +299,7 @@
       button {
         padding: 12px 16px;
         border: 1px solid rgba(255, 255, 255, 0.16);
-        background: radial-gradient(
-            100% 100% at 50% 0%,
-            rgba(0, 217, 255, 0.22),
-            transparent 51%
-          ),
-          linear-gradient(180deg, var(--primary), #5b2bd6);
+        background: radial-gradient(100% 100% at 50% 0%, rgba(0, 217, 255, 0.22), transparent 51%), linear-gradient(180deg, var(--primary), #5b2bd6);
         color: #fff;
         border-radius: 12px;
         cursor: pointer;
@@ -388,8 +356,7 @@
       }
 
       #theCode {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-          "Liberation Mono", "Courier New", monospace;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 12px;
         line-height: 1.5;
         white-space: pre-wrap;
@@ -667,19 +634,11 @@
             </div>
 
             <div>
-              <img
-                class="fullscreenlogo"
-                id="fullscreenlogo"
-                src="/fullscreenlogo"
-              />
+              <img class="fullscreenlogo" id="fullscreenlogo" src="/fullscreenlogo" />
             </div>
           </div>
 
-          <iframe
-            id="preview"
-            class="preview"
-            sandbox="allow-modals allow-scripts allow-forms allow-pointer-lock allow-popups"
-          ></iframe>
+          <iframe id="preview" class="preview" sandbox="allow-modals allow-scripts allow-forms allow-pointer-lock allow-popups"></iframe>
 
           <!-- <button id="openInNewTab">Open preview in new tab</button> -->
         </div>
@@ -696,53 +655,32 @@
               <button onclick="this.style.display='none'">Delete folder</button>
             </a>
             <br />
-            <a
-              id="downloadfolder"
-              href="https://aiapp.xcodelab.xyz/download"
-              download
-            >
-              <button onclick="this.style.display='none'">
-                Download Folder. Note: After game comes, click "Extract folder"
-              </button>
+            <a id="downloadfolder" href="https://aiapp.xcodelab.xyz/download" download>
+              <button onclick="this.style.display='none'">Download Folder. Note: After game comes, click "Extract folder"</button>
             </a>
 
-            <div>
-              Now send a game idea in the Input box named as "Type your game
-              logic".
-            </div>
-
+            <div>Now send a game idea in the Input box named as "Type your game logic".</div>
 
             <div>After game comes, click "Save logicofgame.js"</div>
             <div>After game comes, click "Save server.js"</div>
 
-            <a
-              id="extractfolder"
-              onclick="this.style.display='none'"
-              href="https://aiapp.xcodelab.xyz/extract"
-              download
-            >
+            <a id="extractfolder" onclick="this.style.display='none'" href="https://aiapp.xcodelab.xyz/extract" download>
               <button>Extract Folder</button>
             </a>
             <!-- <button id="saveBtn">Save Communication</button> -->
             <!-- <button id="saveIndexHTML">Save Index.html</button> -->
             <button id="savelogicofgamejs">Save logicofgame.js</button>
             <button id="saveServerjs">Save server.js</button>
-            <div>
-              Now send a UI idea in the Input box named as "Type your UI idea".
-            </div>
+            <div>Now send a UI idea in the Input box named as "Type your UI idea".</div>
 
             <div>After result comes, click "Save App.jsx"</div>
             <button id="saveAppjsx">Save App.jsx</button>
             <button id="startServer">Start Game</button>
             <button id="get2links">get 2 links</button>
 
-            <a id="player1Link" href="#" target="_blank"
-              ><button>Game link for Player 1</button></a
-            >
+            <a id="player1Link" href="#" target="_blank"><button>Game link for Player 1</button></a>
 
-            <a id="player2Link" href="#" target="_blank"
-              ><button>Game link for Player 2</button></a
-            >
+            <a id="player2Link" href="#" target="_blank"><button>Game link for Player 2</button></a>
 
             <!-- <button id="startServer2">Start Game2</button> -->
             <!-- <a
@@ -771,10 +709,7 @@
 
         <div class="card">
           <h3>META Context</h3>
-          <textarea
-            id="metainput"
-            placeholder="Type your META CONTEXT"
-          ></textarea>
+          <textarea id="metainput" placeholder="Type your META CONTEXT"></textarea>
         </div>
       </aside>
     </div>
@@ -1191,9 +1126,7 @@
           if (msg.role === "user") div.classList.add("user");
           else if (msg.role === "assistant") div.classList.add("assistant");
           else if (msg.role === "System") div.classList.add("system");
-          div.innerHTML = `<strong"><b>${
-            msg.role
-          }</b></strong><div>${escapeHtml(msg.content)}</div>`;
+          div.innerHTML = `<strong"><b>${msg.role}</b></strong><div>${escapeHtml(msg.content)}</div>`;
           messagesEl.appendChild(div);
         });
         messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -1201,13 +1134,7 @@
 
       function escapeHtml(text) {
         if (!text) return "";
-        return text
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;")
-          .replaceAll("\n", "<br/>");
+        return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;").replaceAll("\n", "<br/>");
       }
 
       async function downloadCommunication(comm) {
@@ -1263,10 +1190,7 @@
           finalText = " " + "Update the logic of the game as below" + text;
         } else if (ui_input_text.length != 0) {
           console.log("We don't have text, but we have UI text");
-          finalText =
-            " " +
-            "give me the react frontend App.jsx for above codes. give everything in 1 file. dont wrap in a single HTML. make below modification." +
-            ui_input_text;
+          finalText = " " + "give me the react frontend App.jsx for above codes. give everything in 1 file. dont wrap in a single HTML. make below modification." + ui_input_text;
         } else {
           console.log("We have nothing");
           return;
@@ -1347,8 +1271,7 @@
               previewEl.srcdoc = "htmlContent";
 
               openBtn?.addEventListener("click", () => {
-                const html =
-                  document.getElementById("output").textContent || "";
+                const html = document.getElementById("output").textContent || "";
                 const blob = new Blob([html], { type: "text/html" });
                 const url = URL.createObjectURL(blob);
                 window.open(url, "_blank");
@@ -1356,8 +1279,7 @@
               });
 
               fullscreenBtn?.addEventListener("click", () => {
-                const html =
-                  document.getElementById("output").textContent || "";
+                const html = document.getElementById("output").textContent || "";
                 const blob = new Blob([html], { type: "text/html" });
                 const url = URL.createObjectURL(blob);
                 window.open(url, "_blank");
@@ -1494,8 +1416,7 @@
         if (!source) return null;
 
         // Match the section that starts with "## logicofgame.js" and capture code inside the ``` block
-        const regex =
-          /##\s*logicofgame\.js\s*```(?:javascript)?\s*([\s\S]*?)```/i;
+        const regex = /##\s*logicofgame\.js\s*```(?:javascript)?\s*([\s\S]*?)```/i;
         const match = source.match(regex);
 
         if (match && match[1]) {

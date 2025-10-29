@@ -115,12 +115,7 @@ app.post("/save-html", (req, res) => {
     return res.status(400).json({ error: "No content provided" });
   }
 
-  const downloadsPath = path.join(
-    os.homedir(),
-    "Downloads",
-    "extracted",
-    "ReactNodeTemplate"
-  );
+  const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate");
   fs.mkdirSync(downloadsPath, { recursive: true }); // ensure folder exists
 
   const filePath = path.join(downloadsPath, "index.html");
@@ -134,14 +129,7 @@ app.post("/save-appjsx", (req, res) => {
     return res.status(400).json({ error: "No content provided" });
   }
 
-  const downloadsPath = path.join(
-    os.homedir(),
-    "Downloads",
-    "extracted",
-    "ReactNodeTemplate",
-    "frontend",
-    "src"
-  );
+  const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "frontend", "src");
   fs.mkdirSync(downloadsPath, { recursive: true }); // ensure folder exists
 
   const filePath = path.join(downloadsPath, "App.jsx");
@@ -157,13 +145,7 @@ app.post("/save-serverjs", (req, res) => {
     return res.status(400).json({ error: "No content provided" });
   }
 
-  const downloadsPath = path.join(
-    os.homedir(),
-    "Downloads",
-    "extracted",
-    "ReactNodeTemplate",
-    "backend"
-  );
+  const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "backend");
   fs.mkdirSync(downloadsPath, { recursive: true });
 
   const filePath = path.join(downloadsPath, "server.js");
@@ -180,13 +162,7 @@ app.post("/save-logicofgamejs", (req, res) => {
     return res.status(400).json({ error: "No content provided" });
   }
 
-  const downloadsPath = path.join(
-    os.homedir(),
-    "Downloads",
-    "extracted",
-    "ReactNodeTemplate",
-    "backend"
-  );
+  const downloadsPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "backend");
   fs.mkdirSync(downloadsPath, { recursive: true });
 
   const filePath = path.join(downloadsPath, "logicofgame.js");
@@ -198,13 +174,7 @@ app.post("/save-logicofgamejs", (req, res) => {
 app.get("/start-server", (req, res) => {
   console.log("called start-server route");
 
-  const backendPath = path.join(
-    os.homedir(),
-    "Downloads",
-    "extracted",
-    "ReactNodeTemplate",
-    "backend"
-  );
+  const backendPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "backend");
 
   // Step 1: Run npm install
   exec("npm install", { cwd: backendPath }, (error, stdout, stderr) => {
@@ -227,13 +197,7 @@ app.get("/start-server", (req, res) => {
       res.send("Server started successfully!");
     });
   });
-  const frontendPath = path.join(
-    os.homedir(),
-    "Downloads",
-    "extracted",
-    "ReactNodeTemplate",
-    "frontend"
-  );
+  const frontendPath = path.join(os.homedir(), "Downloads", "extracted", "ReactNodeTemplate", "frontend");
 
   // start the frontend server
   // exec("npm install", { cwd: frontendPath }, (error2, stdout2, stderr2) => {
@@ -300,15 +264,13 @@ app.post("/get2links", (req, res) => {
         {
           name: "Player1",
           uuid: "uuid_1",
-          profileImage:
-            "https://safa.sgp1.digitaloceanspaces.com/safa./avatar_images/Kaelani_M.png",
+          profileImage: "https://safa.sgp1.digitaloceanspaces.com/safa./avatar_images/Kaelani_M.png",
           ready: true,
         },
         {
           name: "Player2",
           uuid: "uuid_2",
-          profileImage:
-            "https://safa.sgp1.digitaloceanspaces.com/safa./avatar_images/Zayven_M.png",
+          profileImage: "https://safa.sgp1.digitaloceanspaces.com/safa./avatar_images/Zayven_M.png",
           ready: true,
         },
       ],
@@ -347,4 +309,3 @@ app.post("/get2links", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-
