@@ -1431,7 +1431,7 @@ export default function App() {
           finalText = " " + "Update the logic of the game as below" + text;
         } else if (ui_input_text.length != 0) {
           console.log("We don't have text, but we have UI text");
-          finalText = " " + "give me the react frontend App.jsx for above codes. give everything in 1 file. dont wrap in a single HTML. use this template for App.jsx. The template is: " + appjsxcode + ". make below modification." + ui_input_text;
+          finalText = " " + "give me the react frontend App.jsx for above codes. give everything in 1 file. give in the format #### App.jsx. Dont wrap in a single HTML. Use this template for App.jsx. The template is: " + appjsxcode + ". make below modification. " + ui_input_text;
         } else {
           console.log("We have nothing");
           return;
@@ -1575,7 +1575,7 @@ export default function App() {
         if (!source) return null;
 
         // Match the section that starts with "## App.jsx" and capture code inside the ``` block
-        const regex = /##\s*App\.jsx\s*```(?:jsx)?\s*([\s\S]*?)```/i;
+        const regex = /##\s*App\.jsx\s*```(?:javascript)?\s*([\s\S]*?)```/i;
         const match = source.match(regex);
         console.log("match", match);
         console.log("match[1].trim()", match[1].trim());
