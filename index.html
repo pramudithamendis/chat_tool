@@ -1326,6 +1326,240 @@ export default function App() {
   );
 }
       `;
+      let appjsxcodeWithoutSounds = `
+      import React, { useEffect, useRef, useState } from "react";
+import "./App.css";
+
+export default function App() {
+  const canvasRef = useRef(null);
+  const [log, setLog] = useState([]);
+  const wsRef = useRef(null);
+  const prevStateRef = useRef({
+    snakes: [{ score: 0 }, { score: 0 }],
+    food: { x: -1, y: -1 },
+  });
+
+  const appendLog = (msg) => setLog((prev) => [...prev, msg]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameSessionUuid = urlParams.get("gameSessionUuid");
+    const playerUuid = urlParams.get("uuid");
+
+    const ws = new WebSocket(\`wss://aigameb.gameonworld.ai/socket\`);
+    wsRef.current = ws;
+
+    ws.addEventListener("open", () => {
+      appendLog("✅ Connected to WebSocket server");
+      if (gameSessionUuid && playerUuid) {
+        ws.send(
+          JSON.stringify({
+            type: "joinGame",
+            gameSessionUuid,
+            playerUuid,
+          })
+        );
+      }
+    });
+
+    ws.addEventListener("message", (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        switch (msg.type) {
+          case "joined":
+            appendLog(\`Joined as \${msg.role} (\${msg.playerNum || "spectator"})\`);
+            break;
+          case "state":
+            handleState(msg.data);
+            break;
+          case "error":
+            appendLog(\`❌ Error: \${msg.message}\`);
+            break;
+          case "gameStarted":
+            appendLog("🎮 Game started!");
+            break;
+          case "gameStopped":
+            appendLog("🛑 Game stopped!");
+            break;
+          case "gameOver":
+            appendLog(\`🏆 \${msg.message}\`);
+            drawGameOver(msg.message);
+            break;
+          default:
+            console.log("Unknown message:", msg);
+        }
+      } catch (e) {
+        console.error("Bad message:", e);
+      }
+    });
+
+    ws.addEventListener("close", () => appendLog("⚠️ Disconnected"));
+
+    const ctx = canvasRef.current.getContext("2d");
+    const resize = () => {
+      const s = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.7, 720);
+      canvasRef.current.width = Math.floor(s);
+      canvasRef.current.height = Math.floor(s);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    function handleState(state) {
+      const prevState = prevStateRef.current;
+      if (state.snakes && Array.isArray(state.snakes)) {
+        state.snakes.forEach((snake, index) => {
+          if (!snake || !snake.body || snake.body.length === 0) return;
+          if (!prevState.snakes || !prevState.snakes[index]) return;
+
+          if (snake.score > prevState.snakes[index].score) {
+            const head = snake.body[0];
+            if (head.x === prevState.food.x && head.y === prevState.food.y) {
+            } else {
+              let isBite = false;
+              for (const other of state.snakes) {
+                if (other.id !== snake.id && other.body) {
+                  for (const seg of other.body) {
+                    if (head.x === seg.x && head.y === seg.y) {
+                      isBite = true;
+                      break;
+                    }
+                  }
+                  if (isBite) break;
+                }
+              }
+            }
+          }
+        });
+        prevStateRef.current = {
+          snakes: state.snakes.map((s) => ({
+            score: s?.score || 0,
+            body: s?.body || [],
+          })),
+          food: { ...(state.food || { x: -1, y: -1 }) },
+        };
+      }
+      draw(ctx, state);
+    }
+
+    function draw(ctx, state) {
+      if (!state) return;
+      const grid = state.grid || 20;
+      const cell = canvasRef.current.width / grid;
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
+      ctx.fillStyle = "#22c55e";
+      for (const s of state.snakes || []) {
+        if (!s.body || s.body.length === 0) continue;
+        for (const seg of s.body) {
+          ctx.fillRect(seg.x * cell, seg.y * cell, cell - 2, cell - 2);
+        }
+        if (s.name && s.body[0]) {
+          const head = s.body[0];
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "12px Arial";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(s.name, head.x * cell + cell / 2, head.y * cell + cell / 2);
+        }
+      }
+
+      if (state.food) {
+        ctx.fillStyle = "#ff0000";
+        ctx.fillRect(state.food.x * cell, state.food.y * cell, cell - 2, cell - 2);
+      }
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "16px Arial";
+      ctx.textAlign = "left";
+      if (state.snakes && state.snakes[0]) ctx.fillText(\`\${state.snakes[0].name}: \${state.snakes[0].score}\`, 10, 10);
+      ctx.textAlign = "right";
+      if (state.snakes && state.snakes[1]) ctx.fillText(\`\${state.snakes[1].name}: \${state.snakes[1].score}\`, canvasRef.current.width - 10, 10);
+
+      ctx.textAlign = "center";
+      if (state.countdown > 0) {
+        ctx.font = "48px Arial";
+        ctx.fillText(Math.ceil(state.countdown).toString(), canvasRef.current.width / 2, canvasRef.current.height / 2);
+      } else {
+        ctx.fillText(\`Time: \${Math.ceil(state.timer)}s\`, canvasRef.current.width / 2, 10);
+      }
+    }
+
+    function drawGameOver(message) {
+      const ctx = canvasRef.current.getContext("2d");
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Game Over", canvasRef.current.width / 2, canvasRef.current.height / 2 - 20);
+      ctx.fillText(message, canvasRef.current.width / 2, canvasRef.current.height / 2 + 20);
+    }
+
+    return () => {
+      ws.close();
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  // controls
+  const sendDir = (dir) => {
+    wsRef.current?.send(JSON.stringify({ type: "dir", data: dir }));
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "10px",
+        padding: "14px",
+        background: "#0b1020",
+        minHeight: "100vh",
+        color: "#e5e7eb",
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{
+          background: "#0f172a",
+          border: "1px solid #1f2937",
+          width: "min(90vmin, 720px)",
+          height: "min(90vmin, 720px)",
+          imageRendering: "pixelated",
+        }}
+      />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 60px)",
+          gridTemplateRows: "repeat(2, 60px)",
+          gap: "5px",
+        }}
+      >
+        <button className="control-btn" id="up-btn" style={{ gridColumn: 2, gridRow: 1 }} onClick={() => sendDir({ x: 0, y: -1 })}>
+          ↑
+        </button>
+        <button className="control-btn" id="left-btn" style={{ gridColumn: 1, gridRow: 2 }} onClick={() => sendDir({ x: -1, y: 0 })}>
+          ←
+        </button>
+        <button className="control-btn" id="right-btn" style={{ gridColumn: 3, gridRow: 2 }} onClick={() => sendDir({ x: 1, y: 0 })}>
+          →
+        </button>
+        <button className="control-btn" id="down-btn" style={{ gridColumn: 2, gridRow: 2 }} onClick={() => sendDir({ x: 0, y: 1 })}>
+          ↓
+        </button>
+      </div>
+
+      <div id="log" style={{ fontSize: "14px", marginTop: "10px", textAlign: "center" }}>
+        {log.map((l, i) => (
+          <div key={i}>{l}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+`;
 
       let communication = [
         {
@@ -1431,7 +1665,7 @@ export default function App() {
           finalText = " " + "Update the logic of the game as below" + text;
         } else if (ui_input_text.length != 0) {
           console.log("We don't have text, but we have UI text");
-          finalText = " " + "give me the react frontend App.jsx for above codes. give everything in 1 file. give in the format #### App.jsx. Dont wrap in a single HTML. Use this template for App.jsx. The template is: " + appjsxcode + ". make below modification. " + ui_input_text;
+          finalText = " " + "give me the react frontend App.jsx for above codes. give everything in 1 file. give in the format #### App.jsx. Dont wrap in a single HTML. Use this template for App.jsx. The template is: " + appjsxcodeWithoutSounds + ". make below modification. " + ui_input_text;
         } else {
           console.log("We have nothing");
           return;
